@@ -323,6 +323,11 @@ pub(super) fn core_xml(doc: &Document) -> Vec<u8> {
         ("dc:description", &c.description),
         ("cp:lastModifiedBy", &last_modified_by),
         ("cp:category", &c.category),
+        ("dc:language", &c.language),
+        ("cp:contentStatus", &c.content_status),
+        ("dc:identifier", &c.identifier),
+        ("cp:version", &c.version),
+        ("cp:lastPrinted", &c.last_printed),
     ] {
         if !v.is_empty() {
             w.leaf(tag, &[], v);
@@ -349,7 +354,7 @@ pub(super) fn app_xml(doc: &Document) -> Vec<u8> {
             ("xmlns:vt", "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"),
         ],
     );
-    w.leaf("Application", &[], "WordCraft");
+    w.leaf("Application", &[], crate::application_name());
     w.leaf("Words", &[], &doc.word_count().to_string());
     w.leaf("Paragraphs", &[], &doc.paragraph_count().to_string());
     w.leaf("DocSecurity", &[], "0");
