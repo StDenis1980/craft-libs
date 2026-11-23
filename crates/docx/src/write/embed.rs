@@ -101,14 +101,18 @@ impl<'d> EmbedWriter<'d> {
         }
     }
 
-    /// Write the font table kept from a file, with the fonts it embeds, relating it from `rels`.
-    /// Whether there was one to write.
-    pub fn font_table(&mut self, rels: &mut PartRels) -> bool {
+    /// Write the font table kept from a file, with the fonts it embeds, relating it from `rels`;
+    /// `None` when there is none.
+    /// The table's own part is handed back for the caller to write where it writes a built table,
+    /// so a document saved again lists its parts in the same order as on the save that built the
+    /// table (the parts it reaches are queued as other kept parts).
+    pub fn font_table(&mut self, rels: &mut PartRels) -> Option<(String, Vec<u8>, String, PartRels)> {
         let mut written = Vec::new();
-        let Some(root) = crate::package::font_table_key(self.passthrough).map(str::to_string) else { return false };
-        let Some(name) = self.copy_tree(&root, &mut HashMap::new(), &mut written) else { return false };
+        let root = crate::package::font_table_key(self.passthrough).map(str::to_string)?;
+        let name = self.copy_tree(&root, &mut HashMap::new(), &mut written)?;
         rels.add(rt::FONT_TABLE, &relative(STORY_PART, &name), false);
-        true
+        let at = written.iter().copied().find(|&i| self.parts.get(i).is_some_and(|(n, ..)| *n == name))?;
+        Some(self.parts.remove(at))
     }
 
     /// Reserve the names of the media files this writer writes. A kept part already holding a

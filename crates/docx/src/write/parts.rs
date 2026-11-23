@@ -164,13 +164,7 @@ pub(crate) fn write_parts(doc: &Document, flavor: Flavor) -> Result<Vec<(String,
         PartRels::default(),
     );
 
-    // The file's own font table, else one naming the fonts the document uses.
-    if !wr.embeds.font_table(&mut rels)
-        && let Some(table) = super::font_table::font_table_xml(doc)
-    {
-        rels.add(rt::FONT_TABLE, "fontTable.xml", false);
-        push_part(&mut entries, &mut overrides, FONT_TABLE_PART, table, &format!("{CT_WML}fontTable+xml"), PartRels::default());
-    }
+    write_font_table(doc, &mut wr, &mut entries, &mut overrides, &mut rels);
 
     // Media referenced by some drawing (orphan parts would make the package suspect).
     let mut media_types: BTreeMap<String, &str> = BTreeMap::new();
@@ -464,6 +458,23 @@ fn write_comments(
         rels.add(rt::COMMENTS_EX, "commentsExtended.xml", false);
         push_part(entries, overrides, "word/commentsExtended.xml", w.into_bytes(), &format!("{CT_WML}commentsExtended+xml"), PartRels::default());
         write_comment_ids(doc, comment_paras, entries, overrides, rels);
+    }
+}
+
+/// The file's own font table, else one naming the fonts the document uses; both at the same
+/// place among the parts, so a table built on one save is listed in the same order on the next.
+fn write_font_table(
+    doc: &Document,
+    wr: &mut Writer<'_>,
+    entries: &mut Vec<(String, Vec<u8>)>,
+    overrides: &mut Vec<(String, String)>,
+    rels: &mut PartRels,
+) {
+    if let Some((name, bytes, ct, prels)) = wr.embeds.font_table(rels) {
+        push_part(entries, overrides, &name, bytes, &ct, prels);
+    } else if let Some(table) = super::font_table::font_table_xml(doc) {
+        rels.add(rt::FONT_TABLE, "fontTable.xml", false);
+        push_part(entries, overrides, FONT_TABLE_PART, table, &format!("{CT_WML}fontTable+xml"), PartRels::default());
     }
 }
 

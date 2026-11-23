@@ -130,9 +130,7 @@ impl Reader<'_> {
         // style hierarchy (ECMA-376 §17.3.1.44). Word leaves a single line of a list paragraph
         // at the bottom of a page in a form whose styles never set it (doc 08 of the comparison
         // corpus); the model's own default (on) stays for new documents and other formats.
-        if sheet.default_para.widow_control.is_none() {
-            sheet.default_para.widow_control = Some(false);
-        }
+        sheet.default_para.widow_control.get_or_insert(false);
         // Built-in styles' behaviour (gallery, priority, visibility), written back as is.
         sheet.latent_styles = root.child("w:latentStyles").map(|l| l.to_xml()).filter(|x| x.len() <= MAX_LATENT_STYLES_XML);
         for s in root.children("w:style").take(10_000) {
